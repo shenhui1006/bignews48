@@ -98,19 +98,23 @@
     <script>
         //入口函数
         $(function () {
-            $.ajax({
-                type: 'get',
-                url: BigNew.category_list,
-                success: function (backData) {
-                    //console.log(backData);
-                    // 使用模板引擎
-                    var resHtml = template('article_cate_temp', backData);
-                    $('tbody').html(resHtml);
+            // 一:一进到文章类别管理页面,发送ajax请求,获取所有的文章类别.
+            getData();
+            function getData() {
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.category_list,
+                    success: function (backData) {
+                        //console.log(backData);
+                        // 使用模板引擎
+                        var resHtml = template('article_cate_temp', backData);
+                        $('tbody').html(resHtml);
 
-                }
-            });
+                    }
+                });
+            }
 
-            // 判断是点击的新增按钮还是编辑按钮弹出的对话框
+            // 二:判断是点击的新增按钮还是编辑按钮弹出的对话框
             //show.bs.modal	show 方法调用之后立即触发该事件。
             //如果是通过点击某个作为触发器的元素，则此元素可以通过事件的 relatedTarget 属性进行访问。
             $('#myModal').on('show.bs.modal', function (e) {
@@ -125,6 +129,36 @@
                     $('#btnAddOrEdit').text('新增').addClass('btn-success').removeClass('btn-primary');
                 }
 
+            });
+
+            // 三:给模态框的新增或编辑 按钮设置点击事件
+            $('#btnAddOrEdit').on('click', function () {
+                // 判断点击的按钮是新增还是编辑
+                if ($(this).hasClass('btn-primary')) {
+                    // 有这个btn-primary类就是新增
+                    // 获取用户新增的分类名和分类别名
+                    var categoreName = $('#recipient-name').val().trim();
+                    var categoreSlug = $('#message-text').val().trim();
+                    //发送ajax请求完成新增
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_add,
+                        data: {
+                            name: categoreName,
+                            slug: categoreSlug
+                        },
+                        success: function (backData) {
+                            if (backData.code == 201) {
+                                //新增成功就应该隐藏模态框,以及重新加载数据
+                                $('#myModal').modal('hide');
+                                getData();
+                                // 清空输入框
+                                $('#recipient-name').val("");
+                                $('#message-text').val("");
+                            }
+                        }
+                    })
+                }
             })
 
         })

@@ -75,6 +75,7 @@
             <!-- 分页插件的html结构 -->
             <div class="row text-center">
                 <ul id="pagination" class="pagination-sm"></ul>
+                <p>没有数据!</p>
             </div>
         </div>
     </div>
@@ -122,6 +123,10 @@
                 }
             });
 
+
+            //声明一个变量myPage 用来表示当前点击的页码
+            var myPage = 1;
+
             //发送ajax请求,根据条件获取对应的文章列表,封装成一个函数
             function getData(myPage, callback) {
                 $.ajax({
@@ -141,8 +146,13 @@
                             $('tbody').html(resHtml);
 
                             //额外做事情
-                            if (callback != null) {
-                                callback(backData)
+                            if (backData.data.totalPage != 0 && callback != null) {
+                                $('#pagination').show();
+                                $('#pagination').next().hide();
+                                callback(backData);
+                            } else if (backData.data.totalPage == 0) {
+                                $('#pagination').hide();
+                                $('#pagination').next().show();
                             }
                         }
                     }
@@ -162,6 +172,7 @@
                     last: '尾页',
                     onPageClick: function (event, page) {
                         //page是当前点击的页码
+                        myPage = page;
                         //继续发送ajax请求.传入当前点击的页面
                         getData(page, null);
                     }
@@ -177,6 +188,34 @@
                     $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
                 });
             });
+
+
+            //四:删除文章
+            //给删除按钮设置点击事件(委托注册)
+            $('tbody').on('click', '.delete', function () {
+                if (confirm('你确定要删除吗?')) {
+                    //通过当前点击的这个删除按钮的自定义属性获取当前文章id
+                    var articleId = $(this).attr('data-id');
+                    //发送ajax请求完成删除
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.article_delete,
+                        data: {
+                            id: articleId
+                        },
+                        success: function (backData) {
+                            if (backData.code == 204) {
+                                //重新加载由于删除部分数据得到的新数据
+                                getData(myPage, function (backData) {
+                                    //使用分页插件
+                                    $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, myPage);
+                                });
+                            }
+                        }
+                    });
+
+                }
+            })
 
 
             //--------------------------------------------------------------------------------
